@@ -3,6 +3,10 @@ variable "primary_nsg_name" {
   description = "The name of the NSG associated with the subnets in which your scale-set VMs will be deployed"
 }
 
+variable "" {
+  default = ""
+}
+
 variable "rabbitmq_elb_ports" {
   type = "map"
 
@@ -17,7 +21,7 @@ variable "rabbitmq_sg_rules_outbound" {
 
   default = {
     # rule-name = ["source-port-range", "dest-port-range", "priority", "access-type", "protocol"]
-    all_outbound = ["*", "*", "1000", "Allow", "Tcp", "*", "*"]
+    all_outbound = ["*", "*", "1000", "Allow", "Tcp", "*", "*", "Internet"]
   }
 }
 
@@ -26,9 +30,9 @@ variable "rabbitmq_sg_rules_inbound" {
 
   default = {
     # rule-name = ["source-port-range", "dest-port-range", "priority", "access-type", "protocol"]
-    ssh          = ["22", "22", "110", "Allow", "Tcp"]
-    rabbitmq     = ["5672", "5672", "120", "Allow", "Tcp"]
-    rabbitmq_gui = ["15672", "15672", "130", "Allow", "Tcp"]
+    ssh          = ["22", "22", "110", "Allow", "Tcp", "VirtualNetwork"]
+    rabbitmq     = ["5672", "5672", "120", "Allow", "Tcp", "VirtualNetwork"]
+    rabbitmq_gui = ["15672", "15672", "130", "Allow", "Tcp", "VirtualNetwork"]
   }
 }
 

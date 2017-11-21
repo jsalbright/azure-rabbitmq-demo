@@ -1,0 +1,73 @@
+#cloud-config
+write_files:
+  - path: /root/conf/enabled_plugins
+    content: |
+        [rabbitmq_management].
+  - path: /root/conf/rabbitmq.config
+    content: |
+        [ { rabbit, [
+          { loopback_users, [ ] } ] }
+         ].
+  - path: /root/find_hosts.sh
+    content: |
+        #!/usr/bin/env bash
+
+        export AWS_DEFAULT_REGION='${region}'
+
+        DNSES=$(aws ec2 describe-instances --filters "Name=tag:aws:autoscaling:groupName,Values=${node_filter_tag}" "Name=instance-state-name,Values=running" | jq ".Reservations[].Instances[].PrivateDnsName" | xargs)
+
+        HOSTNAMES=()
+        for dns in $DNSES; do
+            hostname=($${dns//./ })
+            if [ "$hostname" != "$HOSTNAME" ]; then
+              HOSTNAMES+=( $hostname )
+            fi
+        done
+
+        echo $HOSTNAMES
+  - path: /root/bin/join_cluster.sh
+    content: |
+        #!/usr/bin/env sh
+
+        HOSTNAMES=( $@ )
+
+        for run in {1..${sync_node_count}}; do
+          sleep $[ ( $RANDOM % 10 )  + 1 ]s
+          rabbitmqctl stop_app
+
+          NEW_HOSTNAMES=()
+          for hostname in $HOSTNAMES; do
+            rabbitmqctl join_cluster rabbit@$hostname
+            st=$?
+            if [ $st -ne 0 ] && [ $st -ne 130 ]; then  # 130 is "already joined"
+              NEW_HOSTNAMES+=( $hostname )
+            fi
+          done
+
+          HOSTNAMES=( $${NEW_HOSTNAMES[@]} )
+          rabbitmqctl start_app
+
+          if [ $${#HOSTNAMES[@]} -eq 0 ]; then
+            exit 0
+          fi
+        done
+  - path: /root/configure.sh
+    content: |
+        #!/usr/bin/env bash
+        rabbitmqctl add_user admin ${admin_password}
+        rabbitmqctl set_user_tags admin administrator
+        rabbitmqctl add_user rabbit ${rabbit_password}
+        rabbitmqctl add_vhost /
+        rabbitmqctl set_policy -p / ha-three "^" '{"ha-mode":"exactly", "ha-params":${sync_node_count}, "ha-sync-mode":"automatic", "message-ttl":${message_timeout}, "expires":${message_timeout}}'
+        rabbitmqctl set_permissions -p / admin ".*" ".*" ".*"
+        rabbitmqctl set_permissions -p / rabbit ".*" ".*" ".*"
+        rabbitmqctl delete_user guest
+
+runcmd:
+  - yum update -y
+  - yum install -y jq
+  - service rabbitmq-server start
+  - sleep 1
+  - bash /tmp/bin/join_cluster.sh $(bash /root/find_hosts.sh)
+  - sleep 1
+  - bash /root/configure.sh

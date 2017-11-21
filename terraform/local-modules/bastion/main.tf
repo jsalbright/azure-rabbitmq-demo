@@ -4,8 +4,6 @@ resource "azurerm_public_ip" "jumpbox-pubip" {
   resource_group_name          = "${var.primary_rg_name}"
   public_ip_address_allocation = "static"
 
-  #domain_name_label            = "${var.primary_rg_name}-ssh"
-
   tags {
     environment = "${var.environment}"
   }
@@ -34,6 +32,7 @@ resource "tls_private_key" "ssh-key" {
   rsa_bits  = "2048"
 }
 
+# create our bastion host for ssh access to instances
 resource "azurerm_virtual_machine" "jumpbox" {
   name                  = "${var.environment}-jumpbox"
   location              = "${var.location}"

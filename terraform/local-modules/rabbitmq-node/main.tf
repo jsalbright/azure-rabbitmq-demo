@@ -17,6 +17,21 @@ resource "azurerm_storage_share" "rabbitmq_cluster_share" {
   quota                = "${var.rabbitmq_fileshare_size}"
 }
 
+# generate our cloud-init userdata for the scale-set VMs
+data "template_file" "cloud-init" {
+  template = "${file("${path.module}/templates/cloud-init-docker.yaml")}"
+
+  vars {
+    node_filter_tag = "${var.cluster_config["node_identifier"]}"
+    sync_node_count = "${var.cluster_config["max_count"]}"
+    region          = "${var.region}"
+    secret_cookie   = "${var.rabbitmq_secret_cookie}"
+    admin_password  = "${var.admin_password}"
+    rabbit_password = "${var.rabbit_password}"
+    message_timeout = "${var.timeout_days * 24 * 60 * 60 * 1000}"
+  }
+}
+
 # create a public ip to assign to our ELB
 resource "azurerm_public_ip" "rabbitmq_elb_ip" {
   name                         = "${var.environment}-rabbitmq-elb"
@@ -60,29 +75,32 @@ resource "azurerm_lb_nat_pool" "rabbitmq_elb_ports" {
   frontend_ip_configuration_name = "${var.environment}-elb-pubip"
 }
 
-# resource "azurerm_network_security_rule" "rabbitmq-sg-rules-inbound" {
-#   count                       = "${length(keys(var.rabbitmq_sg_rules_inbound))}"
-#   name                        = "${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"
-#   resource_group_name         = "${var.primary_rg_name}"
-#   network_security_group_name = "${var.primary_nsg_name}"
-#   source_port_range           = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], count.index - 1)}"
-#   destination_port_range      = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], count.index - 2)}"
-#   priority                    = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], count.index - 3)}"
-#   access                      = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], count.index - 4)}"
-#   protocol                    = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], count.index - 5)}"
-#   direction                   = "Inbound"
-# }
-#
-# resource "azurerm_network_security_rule" "rabbitmq-sg-rules-outbound" {
-#   count                       = "${length(keys(var.rabbitmq_sg_rules_outbound))}"
-#   name                        = "${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"
-#   resource_group_name         = "${var.primary_rg_name}"
-#   network_security_group_name = "${var.primary_nsg_name}"
-#   source_port_range           = "${element(var.["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], count.index - 1)}"
-#   destination_port_range      = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], count.index - 2)}"
-#   priority                    = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], count.index - 3)}"
-#   access                      = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], count.index - 4)}"
-#   protocol                    = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], count.index - 5)}"
-#   direction                   = "Inbound"
-# }
+resource "azurerm_network_security_rule" "rabbitmq-sg-rules-inbound" {
+  count                       = "${length(keys(var.rabbitmq_sg_rules_inbound))}"
+  name                        = "${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"
+  resource_group_name         = "${var.primary_rg_name}"
+  network_security_group_name = "${var.primary_nsg_name}"
+  source_port_range           = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], 0)}"
+  destination_port_range      = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], 1)}"
+  priority                    = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], 2)}"
+  access                      = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], 3)}"
+  protocol                    = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], 4)}"
+  destination_address_prefix  = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], 5)}"
+  source_address_prefix       = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], 6)}"
+  direction                   = "Inbound"
+}
 
+resource "azurerm_network_security_rule" "rabbitmq-sg-rules-outbound" {
+  count                       = "${length(keys(var.rabbitmq_sg_rules_outbound))}"
+  name                        = "${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"
+  resource_group_name         = "${var.primary_rg_name}"
+  network_security_group_name = "${var.primary_nsg_name}"
+  source_port_range           = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], 0)}"
+  destination_port_range      = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], 1)}"
+  priority                    = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], 2)}"
+  access                      = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], 3)}"
+  protocol                    = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], 4)}"
+  destination_address_prefix  = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], 5)}"
+  source_address_prefix       = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], 6)}"
+  direction                   = "Outbound"
+}
