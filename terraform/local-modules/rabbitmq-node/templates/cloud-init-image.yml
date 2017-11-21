@@ -12,9 +12,9 @@ write_files:
     content: |
         #!/usr/bin/env bash
 
-        export AZURE_DEFAULT_REGION='${region}'
+        export AZURE_DEFAULT_LOCATION='${location}'
 
-        DNSES=$(aws ec2 describe-instances --filters "Name=tag:aws:autoscaling:groupName,Values=${node_filter_tag}" "Name=instance-state-name,Values=running" | jq ".Reservations[].Instances[].PrivateDnsName" | xargs)
+        DNSES=$(az vm list --filters "Name=tag:aws:autoscaling:groupName,Values=${node_filter_tag}" "Name=instance-state-name,Values=running" | jq ".Reservations[].Instances[].PrivateDnsName" | xargs)
 
         HOSTNAMES=()
         for dns in $DNSES; do

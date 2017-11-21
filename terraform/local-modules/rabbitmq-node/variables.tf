@@ -3,8 +3,22 @@ variable "primary_nsg_name" {
   description = "The name of the NSG associated with the subnets in which your scale-set VMs will be deployed"
 }
 
-variable "cluster_config" {
-  default = {}
+variable "rabbitmq_secret_cookie" {
+  description = "rabbitmq secret-cookie to be pushed to each node for authenticating cluster requests"
+  default     = "supersecretcookie"
+}
+
+variable "admin_password" {
+  description = "admin user password for rabbitmq"
+}
+
+variable "rabbit_password" {
+  description = "rabbit user password for rabbitmq"
+}
+
+variable "timeout_days" {
+  description = "Number of days to wait for timeout"
+  default     = "3"
 }
 
 variable "rabbitmq_elb_ports" {
@@ -89,6 +103,7 @@ variable "cluster_config" {
   default = {
     instance_type_name = "Standard_A0"
     min_count          = 2
+    node_identifier    = "rabbitmq"
   }
 }
 

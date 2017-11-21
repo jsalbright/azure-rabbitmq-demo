@@ -28,6 +28,9 @@ module "rabbitmq-nodes" {
   vm_username             = "${var.rabbitmq_vm_username}"
   vm_password             = "${var.rabbitmq_vm_password}"
   packer_image_config     = "${var.packer_image_config_rabbitmq}"
+  cluster_config          = "${var.cluster_config}"
+  admin_password          = "${var.admin_password}"
+  rabbit_password         = "${var.rabbit_password}"
 }
 
 module "bastion-host" {

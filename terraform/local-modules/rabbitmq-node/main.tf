@@ -19,12 +19,12 @@ resource "azurerm_storage_share" "rabbitmq_cluster_share" {
 
 # generate our cloud-init userdata for the scale-set VMs
 data "template_file" "cloud-init" {
-  template = "${file("${path.module}/templates/cloud-init-docker.yaml")}"
+  template = "${file("${path.module}/templates/cloud-init-image.yml")}"
 
   vars {
     node_filter_tag = "${var.cluster_config["node_identifier"]}"
-    sync_node_count = "${var.cluster_config["max_count"]}"
-    region          = "${var.region}"
+    sync_node_count = "${var.cluster_config["min_count"]}"
+    location        = "${var.location}"
     secret_cookie   = "${var.rabbitmq_secret_cookie}"
     admin_password  = "${var.admin_password}"
     rabbit_password = "${var.rabbit_password}"

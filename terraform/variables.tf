@@ -1,3 +1,19 @@
+variable "cluster_config" {
+  default = {
+    instance_type_name = "Standard_A0"
+    min_count          = 2
+    node_identifier    = "rabbitmq"
+  }
+}
+
+variable "rabbit_password" {
+  default = "password"
+}
+
+variable "admin_password" {
+  default = "password"
+}
+
 variable "rabbitmq_vm_username" {
   default = "rabbitmqadmin"
 }
