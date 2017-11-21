@@ -1,0 +1,57 @@
+{
+  "description": "Basic RHEL image with RabbitMQ installed.",
+  "variables": {
+    "client_id":       "{{env `ARM_CLIENT_ID`}}",
+    "client_secret":   "{{env `ARM_CLIENT_SECRET`}}",
+    "subscription_id": "{{env `ARM_SUBSCRIPTION_ID`}}",
+    "tenant_id":       "{{env `ARM_TENANT_ID`}}",
+    "azure_resource_group_name":  "{{env `ARM_RESOURCE_GROUP`}}",
+    "azure_location": null,
+    "base_rhel_version": "7.3"
+  },
+  "builders": [
+    {
+      "type": "azure-arm",
+      "communicator": "ssh",
+      "ssh_pty": true,
+      "managed_image_name": "rhel-{{ user `base_rhel_version` }}-rabbitmq-x86_64",
+      "managed_image_resource_group_name": "{{ user `azure_resource_group_name` }}",
+      "os_type": "Linux",
+      "vm_size": "Standard_D2",
+      "tenant_id": "{{ user `tenant_id` }}",
+      "client_id": "{{ user `client_id` }}",
+      "client_secret": "{{ user `client_secret` }}",
+      "subscription_id": "{{ user `subscription_id` }}",
+      "location": "{{ user `azure_location` }}",
+      "image_publisher": "RedHat",
+      "image_offer": "RHEL",
+      "image_sku": "{{ user `base_rhel_version` }}",
+      "image_version": "latest"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "#This is required to allow us to use `sudo` from our Packer provisioner.",
+        "#This is enabled by default on all RHEL images for \"security.\"",
+        "sudo sed -i.bak -e '/Defaults.*requiretty/s/^/#/' /etc/sudoers"
+      ]
+    },
+    {
+      "type": "chef-solo",
+      "cookbook_paths": ["../cookbooks"],
+      "run_list": ["base::default","rabbitmq::default","tests::default"]
+    },
+    {
+      "type": "shell",
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+      "inline": [
+        "#We need to deprovision our image to prepare it to be consumed by other Azure VMs.",
+        "#See here for more details: https://www.packer.io/docs/builders/azure.html#deprovision",
+        "/usr/sbin/waagent -force -deprovision && export HISTSIZE=0 && sync"
+      ],
+      "inline_shebang": "/bin/sh -x"
+    }
+  ]
+}

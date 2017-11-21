@@ -12,7 +12,7 @@ write_files:
     content: |
         #!/usr/bin/env bash
 
-        export AWS_DEFAULT_REGION='${region}'
+        export AZURE_DEFAULT_REGION='${region}'
 
         DNSES=$(aws ec2 describe-instances --filters "Name=tag:aws:autoscaling:groupName,Values=${node_filter_tag}" "Name=instance-state-name,Values=running" | jq ".Reservations[].Instances[].PrivateDnsName" | xargs)
 

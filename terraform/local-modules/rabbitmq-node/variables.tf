@@ -3,8 +3,8 @@ variable "primary_nsg_name" {
   description = "The name of the NSG associated with the subnets in which your scale-set VMs will be deployed"
 }
 
-variable "" {
-  default = ""
+variable "cluster_config" {
+  default = {}
 }
 
 variable "rabbitmq_elb_ports" {

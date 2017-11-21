@@ -1,0 +1,5 @@
+name 'rabbitmq'
+maintainer 'Carlos Nunez'
+maintainer_email 'carlos.nunez@contino.io'
+description 'Cookbook for provisioning RabbitMQ.'
+version '0.0.1'
