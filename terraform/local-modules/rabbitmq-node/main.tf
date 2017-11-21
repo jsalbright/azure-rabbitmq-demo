@@ -1,5 +1,6 @@
 # create a storage account for rabbitmq file-share
 resource "azurerm_storage_account" "rabbitmq_storage_acct" {
+  count                    = "${var.create_storage == "true" ? 1 : 0}"
   name                     = "${var.rabbitmq_storage_config["storageacct_name"]}"
   resource_group_name      = "${var.primary_rg_name}"
   location                 = "${var.location}"
@@ -9,6 +10,7 @@ resource "azurerm_storage_account" "rabbitmq_storage_acct" {
 
 # create the rabbitmq file-share
 resource "azurerm_storage_share" "rabbitmq_cluster_share" {
+  count                = "${var.create_storage == "true" ? 1 : 0}"
   name                 = "rabbitmq-${var.environment}"
   resource_group_name  = "${var.primary_rg_name}"
   storage_account_name = "${azurerm_storage_account.rabbitmq_storage_acct.name}"
@@ -21,8 +23,6 @@ resource "azurerm_public_ip" "rabbitmq_elb_ip" {
   location                     = "${var.location}"
   resource_group_name          = "${var.primary_rg_name}"
   public_ip_address_allocation = "static"
-
-  #domain_name_label            = "${var.primary_rg_name}"
 
   tags {
     environment = "${var.environment}"
@@ -48,14 +48,41 @@ resource "azurerm_lb_backend_address_pool" "rabbitmq_bepool" {
   name                = "${var.environment}-bepool-rabbitmq"
 }
 
-resource "azurerm_lb_nat_pool" "lbnatpool" {
-  count                          = 3
+resource "azurerm_lb_nat_pool" "rabbitmq_elb_ports" {
+  count                          = "${length(keys(var.rabbitmq_elb_ports))}"
   resource_group_name            = "${var.primary_rg_name}"
-  name                           = "ssh"
+  name                           = "${element(keys(var.rabbitmq_elb_ports), count.index)}"
   loadbalancer_id                = "${azurerm_lb.rabbitmq_elb.id}"
-  protocol                       = "Tcp"
-  frontend_port_start            = 50000
-  frontend_port_end              = 50119
-  backend_port                   = 22
-  frontend_ip_configuration_name = "PublicIPAddress"
+  frontend_port_start            = "${element(var.rabbitmq_elb_ports["${element(keys(var.rabbitmq_elb_ports), count.index)}"], count.index + 0)}"
+  frontend_port_end              = "${element(var.rabbitmq_elb_ports["${element(keys(var.rabbitmq_elb_ports), count.index)}"], count.index + 1) + 1}" # we need the + 1 because Azure requires end port greater-than start
+  backend_port                   = "${element(var.rabbitmq_elb_ports["${element(keys(var.rabbitmq_elb_ports), count.index)}"], count.index + 2)}"
+  protocol                       = "${element(var.rabbitmq_elb_ports["${element(keys(var.rabbitmq_elb_ports), count.index)}"], count.index + 3)}"
+  frontend_ip_configuration_name = "${var.environment}-elb-pubip"
 }
+
+# resource "azurerm_network_security_rule" "rabbitmq-sg-rules-inbound" {
+#   count                       = "${length(keys(var.rabbitmq_sg_rules_inbound))}"
+#   name                        = "${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"
+#   resource_group_name         = "${var.primary_rg_name}"
+#   network_security_group_name = "${var.primary_nsg_name}"
+#   source_port_range           = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], count.index - 1)}"
+#   destination_port_range      = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], count.index - 2)}"
+#   priority                    = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], count.index - 3)}"
+#   access                      = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], count.index - 4)}"
+#   protocol                    = "${element(var.rabbitmq_sg_rules_inbound["${element(keys(var.rabbitmq_sg_rules_inbound), count.index)}"], count.index - 5)}"
+#   direction                   = "Inbound"
+# }
+#
+# resource "azurerm_network_security_rule" "rabbitmq-sg-rules-outbound" {
+#   count                       = "${length(keys(var.rabbitmq_sg_rules_outbound))}"
+#   name                        = "${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"
+#   resource_group_name         = "${var.primary_rg_name}"
+#   network_security_group_name = "${var.primary_nsg_name}"
+#   source_port_range           = "${element(var.["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], count.index - 1)}"
+#   destination_port_range      = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], count.index - 2)}"
+#   priority                    = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], count.index - 3)}"
+#   access                      = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], count.index - 4)}"
+#   protocol                    = "${element(var.rabbitmq_sg_rules_outbound["${element(keys(var.rabbitmq_sg_rules_outbound), count.index)}"], count.index - 5)}"
+#   direction                   = "Inbound"
+# }
+

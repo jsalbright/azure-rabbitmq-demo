@@ -14,3 +14,18 @@ rabbitmq_storage_config = {
 }
 
 rabbitmq_fileshare_size = "32"
+
+packer_image_config = {
+  publisher = "Canonical"
+  offer     = "UbuntuServer"
+  sku       = "16.04-LTS"
+  version   = "latest"
+}
+
+rabbitmq_vm_username = "rabbitmqadmin"
+
+rabbitmq_vm_password = "P@ssw0rd!"
+
+bastion_vm_username = "bastionadmin"
+
+bastion_vm_password = "P@ssw0rd!"

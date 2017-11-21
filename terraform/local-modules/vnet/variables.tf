@@ -15,3 +15,10 @@ variable "vnet_cidr" {
 
   #default = "10.10.0.0/16"
 }
+
+variable "vnet_security_groups" {
+  default = {
+    # group-name => location
+    primary = "East US"
+  }
+}

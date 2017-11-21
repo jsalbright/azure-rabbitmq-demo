@@ -1,3 +1,8 @@
+variable "primary_nsg_id" {
+  type        = "string"
+  description = "The ID of the main network security-group that we're using to provision our subnets"
+}
+
 variable "location" {
   description = "Base-Subnet - Location Name (East US)"
   default     = "East US"

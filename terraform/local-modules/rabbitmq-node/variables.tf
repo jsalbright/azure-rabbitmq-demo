@@ -1,3 +1,57 @@
+variable "primary_nsg_name" {
+  type        = "string"
+  description = "The name of the NSG associated with the subnets in which your scale-set VMs will be deployed"
+}
+
+variable "rabbitmq_elb_ports" {
+  type = "map"
+
+  default = {
+    # port-name = ["elb-port-start", "elb-port-stop", "host-target-port", "protocol"]
+    rabbitmq_gui = ["80", "80", "5672", "Tcp"]
+  }
+}
+
+variable "rabbitmq_sg_rules_outbound" {
+  type = "map"
+
+  default = {
+    # rule-name = ["source-port-range", "dest-port-range", "priority", "access-type", "protocol"]
+    all_outbound = ["*", "*", "1000", "Allow", "Tcp", "*", "*"]
+  }
+}
+
+variable "rabbitmq_sg_rules_inbound" {
+  type = "map"
+
+  default = {
+    # rule-name = ["source-port-range", "dest-port-range", "priority", "access-type", "protocol"]
+    ssh          = ["22", "22", "110", "Allow", "Tcp"]
+    rabbitmq     = ["5672", "5672", "120", "Allow", "Tcp"]
+    rabbitmq_gui = ["15672", "15672", "130", "Allow", "Tcp"]
+  }
+}
+
+variable "packer_image_config" {
+  type        = "map"
+  description = "The metadata of the rabbitmq image that we consume from our packer immutable image pipeline"
+
+  default = {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04-LTS"
+    version   = "latest"
+  }
+}
+
+variable "vm_port_configs" {
+  type = "map"
+
+  default = {
+    ssh = "22"
+  }
+}
+
 variable "rabbitmq_storage_config" {
   type        = "map"
   description = "A map of values for configuring the name of the storage-account and the storage-type for the VM(s)"
@@ -16,19 +70,21 @@ variable "rabbitmq_fileshare_size" {
 }
 
 variable "vm_username" {
-  type    = "string"
-  default = "administrator"
+  type        = "string"
+  description = "The username for the VM that we will associate with the ssh keypair that gets generated for the post-provisioners to use"
 }
 
 variable "vm_password" {
-  type    = "string"
-  default = "P@ssw0rd"
+  type        = "string"
+  description = "The password for our VM post-provisioner user"
 }
 
 variable "cluster_config" {
+  type = "map"
+
   default = {
     instance_type_name = "Standard_A0"
-    min_count          = 3
+    min_count          = 2
   }
 }
 
@@ -37,26 +93,11 @@ variable "subnet_id" {
   description = "The subnet in which to deploy the VMs in our Scale-Sets"
 }
 
-# variable "rabbitmq_image_sku" {
-#   description = "The release-name of the OS image that we will install for the Jenkins VM"
-#   type        = "string"
-# }
-#
-# variable "rabbitmq_vm_username" {
-#   description = "The default username that we will use for connecting to the Jenkins VM"
-#   type        = "string"
-# }
-#
-# variable "rabbitmq_vm_password" {
-#   # NOTE: 6-72 chars, at least 1 ucase and 1 lcase char and must contain a special char or number.
-#   description = "The default password that we will use for connecting to the Jenkins VM"
-#   type        = "string"
-# }
-#
-# variable "rabbitmq_image_version" {
-#   description = "The release-version of the OS image that we will install for the Jenkins VM"
-#   type        = "string"
-# }
+variable "create_storage" {
+  type        = "string"
+  description = "Toggle creating file-share until we actually need it"
+  default     = "false"
+}
 
 variable "location" {
   type        = "string"

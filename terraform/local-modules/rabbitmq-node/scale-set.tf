@@ -1,4 +1,4 @@
-# create the temp ssh-key for our provisioners
+# create the temp ssh-key for our provisioners (remove later)
 resource "tls_private_key" "ssh-key" {
   algorithm = "RSA"
   rsa_bits  = "2048"
@@ -17,10 +17,10 @@ resource "azurerm_virtual_machine_scale_set" "rabbitmq_scaleset" {
   }
 
   storage_profile_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "16.04-LTS"
-    version   = "latest"
+    publisher = "${var.packer_image_config["publisher"]}"
+    offer     = "${var.packer_image_config["offer"]}"
+    sku       = "${var.packer_image_config["sku"]}"
+    version   = "${var.packer_image_config["version"]}"
   }
 
   storage_profile_os_disk {
@@ -61,7 +61,7 @@ resource "azurerm_virtual_machine_scale_set" "rabbitmq_scaleset" {
       name                                   = "RabbitMQIPConfiguration"
       subnet_id                              = "${var.subnet_id}"
       load_balancer_backend_address_pool_ids = ["${azurerm_lb_backend_address_pool.rabbitmq_bepool.id}"]
-      load_balancer_inbound_nat_rules_ids    = ["${element(azurerm_lb_nat_pool.lbnatpool.*.id, count.index)}"]
+      load_balancer_inbound_nat_rules_ids    = ["${element(azurerm_lb_nat_pool.rabbitmq_elb_ports.*.id, count.index)}"]
     }
   }
 
