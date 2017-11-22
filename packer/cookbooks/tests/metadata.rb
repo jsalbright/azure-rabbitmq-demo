@@ -1,0 +1,5 @@
+name 'tests'
+maintainer 'Carlos Nunez'
+maintainer_email 'carlos.nunez@contino.io'
+description 'Local cookbook integration tests.'
+version '0.0.1'

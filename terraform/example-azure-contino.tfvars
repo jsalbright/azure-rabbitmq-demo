@@ -29,3 +29,5 @@ rabbitmq_vm_password = "P@ssw0rd!"
 bastion_vm_username = "bastionadmin"
 
 bastion_vm_password = "P@ssw0rd!"
+
+rabbitmq_image_version = 4

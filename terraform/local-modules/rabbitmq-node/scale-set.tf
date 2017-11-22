@@ -4,6 +4,18 @@ resource "tls_private_key" "ssh-key" {
   rsa_bits  = "2048"
 }
 
+resource "azurerm_image" "rabbitmq_custom_image" {
+  name                = "${var.rabbitmq_image_version}-rhel-7.3-rabbitmq-x86_64"
+  location            = "${var.location}"
+  resource_group_name = "${var.image_rg_name}"
+
+  os_disk {
+    os_type  = "linux"
+    os_state = "Generalized"
+    caching  = "ReadWrite"
+  }
+}
+
 resource "azurerm_virtual_machine_scale_set" "rabbitmq_scaleset" {
   name                = "${var.environment}-rabbitmq-scaleset"
   location            = "${var.location}"
@@ -17,10 +29,7 @@ resource "azurerm_virtual_machine_scale_set" "rabbitmq_scaleset" {
   }
 
   storage_profile_image_reference {
-    publisher = "${var.packer_image_config["publisher"]}"
-    offer     = "${var.packer_image_config["offer"]}"
-    sku       = "${var.packer_image_config["sku"]}"
-    version   = "${var.packer_image_config["version"]}"
+    id = "${azurerm_image.rabbitmq_custom_image.id}"
   }
 
   storage_profile_os_disk {

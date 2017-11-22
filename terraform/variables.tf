@@ -90,3 +90,13 @@ variable "environment" {
   description = "The name of the environment to attach to the Jenkins VM as a Tag"
   type        = "string"
 }
+
+variable "image_resource_group_name" {
+  description = "The resource group where images are stored."
+  type        = "string"
+}
+
+variable "rabbitmq_image_version" {
+  description = "The image version to use for our RabbitMQ image."
+  type        = "string"
+}

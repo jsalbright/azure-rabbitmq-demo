@@ -132,3 +132,13 @@ variable "environment" {
   type        = "string"
   description = "The name of the logical environment to associate these Azure resources"
 }
+
+variable "rabbitmq_image_version" {
+  type        = "string"
+  description = "The version of the RabbitMQ image to use."
+}
+
+variable "image_rg_name" {
+  type        = "string"
+  description = "The resource group containing our managed disk image."
+}

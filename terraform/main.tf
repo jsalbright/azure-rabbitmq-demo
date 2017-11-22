@@ -31,6 +31,8 @@ module "rabbitmq-nodes" {
   cluster_config          = "${var.cluster_config}"
   admin_password          = "${var.admin_password}"
   rabbit_password         = "${var.rabbit_password}"
+  rabbitmq_image_version  = "${var.rabbitmq_image_version}"
+  image_rg_name           = "${var.image_resource_group_name}"
 }
 
 module "bastion-host" {
