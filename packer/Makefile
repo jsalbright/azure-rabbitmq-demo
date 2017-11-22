@@ -59,6 +59,12 @@ packer_build: do_packer_build
 
 do_packer_%:
 	action=$$(echo "$@" | rev | cut -f1 -d '_' | rev); \
-	echo "INFO: Building version $$IMAGE_VERSION of rhel-rabbitmq-x86_64 image."; \
+	this_image_version=$$(cat .build_number); \
+	if [ "$$action" == "build" ]; \
+	then \
+		echo "INFO: Building version $$this_image_version of rhel-rabbitmq-x86_64 image."; \
+	else \
+		echo "INFO: Running Packer action: $$action"; \
+	fi; \
 	docker run -it -v $$PWD:/work -w /work $(DOCKER_BASE_ENV_VARS) $(ADDITIONAL_DOCKER_ENV_VARS) \
 		hashicorp/packer $$action $(DOCKER_ARGS)
