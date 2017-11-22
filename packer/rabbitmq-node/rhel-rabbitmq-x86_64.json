@@ -7,14 +7,15 @@
     "tenant_id":       "{{env `ARM_TENANT_ID`}}",
     "azure_resource_group_name":  "{{env `ARM_RESOURCE_GROUP`}}",
     "azure_location": "East US",
-    "base_rhel_version": "7.3"
+    "base_rhel_version": "7.3",
+    "image_version": "{{ env `IMAGE_VERSION` }}"
   },
   "builders": [
     {
       "type": "azure-arm",
       "communicator": "ssh",
       "ssh_pty": true,
-      "managed_image_name": "rhel-{{ user `base_rhel_version` }}-rabbitmq-x86_64",
+      "managed_image_name": "{{ user `image_version` }}-rhel-{{ user `base_rhel_version` }}-rabbitmq-x86_64",
       "managed_image_resource_group_name": "{{ user `azure_resource_group_name` }}",
       "os_type": "Linux",
       "vm_size": "Standard_D2",
