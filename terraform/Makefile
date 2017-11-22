@@ -40,6 +40,8 @@ validate: init terraform_validate
 plan: init terraform_plan
 
 apply: init validate plan terraform_apply
+	
+destroy: terraform_destroy
 
 .PHONY: terraform_init terraform_get terraform_plan terraform_apply
 
