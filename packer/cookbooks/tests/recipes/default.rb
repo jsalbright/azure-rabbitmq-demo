@@ -2,11 +2,14 @@ directory '/tmp/inspec' do
   action :create
 end
 
-cb.manifest['files'].each do |manifest|
-  inspec_test_file_path = manifest['path']
-  inspec_test_file_name = manifest['name']
-  cookbook_file "/tmp/inspec/#{inspec_test_file_name}" do
-    source inspec_test_file_path
+# Kind of a hacky way of doing this.
+# In a real-life scenario, these tests would live elsewhere and be copied
+# via `git` or some other tool.
+[ 'should_be_running',
+  'ports_should_be_open' ].each do |test|
+  full_test_name = "rabbitmq_#{test}"
+  cookbook_file "/tmp/inspec/#{full_test_name}.rb" do
+    source "#{full_test_name}.rb"
     action :create
   end
 end
